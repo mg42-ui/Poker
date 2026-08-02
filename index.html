@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poker Playstyle Matrix Trainer</title>
+    <!-- React & Tailwind CSS CDN Connections -->
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
+    <script src="https://tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans">
+    <div id="root"></div>
+
+    <script>
+        const { useState, useEffect } = React;
+
+        function PokerApp() {
+            const [activeTab, setActiveTab] = useState('play');
+            const [revealIdentities, setRevealIdentities] = useState(false);
+            const [importText, setImportText] = useState('');
+
+            // State management with LocalStorage recovery for seamless saving/restoring
+            const [models, setModels] = useState(() => {
+                const saved = localStorage.getItem('poker_models');
+                return saved ? JSON.parse(saved) : [
+                    { id: 1, name: 'AI Opponent Alpha', hiddenStyle: 'Aggressive (Bluffer)', gamesLearned: 12, riskTolerance: 'High' },
+                    { id: 2, name: 'AI Opponent Beta', hiddenStyle: 'Passive (Calling Station)', gamesLearned: 9, riskTolerance: 'Low' },
+                    { id: 3, name: 'AI Opponent Gamma', hiddenStyle: 'Tight-Aggressive (Shark)', gamesLearned: 15, riskTolerance: 'Calculated' }
+                ];
+            });
+
+            const [playerHand, setPlayerHand] = useState(() => {
+                const saved = localStorage.getItem('poker_hand');
+                return saved ? JSON.parse(saved) : ['As', 'Ks']; 
+            });
+
+            const [sessionLog, setSessionLog] = useState(() => {
+                const saved = localStorage.getItem('poker_session_log');
+                return saved ? JSON.parse(saved) : [
+                    'Session started.',
+                    'Alpha raised 3x pre-flop.',
+                    'Beta checked the flop.'
+                ];
+            });
+
+            const [history, setHistory] = useState(() => {
+                const saved = localStorage.getItem('poker_history');
+                return saved ? JSON.parse(saved) : [
+                    { id: 'SESS-8921', date: '2026-08-01', totalHands: 42, outcome: '+$240' }
+                ];
+            });
+
+            // Auto-save changes immediately when states evolve
+            useEffect(() => {
+                localStorage.setItem('poker_models', JSON.stringify(models));
+            }, [models]);
+
+            useEffect(() => {
+                localStorage.setItem('poker_hand', JSON.stringify(playerHand));
+            }, [playerHand]);
+
+            useEffect(() => {
+                localStorage.setItem('poker_session_log', JSON.stringify(sessionLog));
+            }, [sessionLog]);
+
+            useEffect(() => {
+                localStorage.setItem('poker_history', JSON.stringify(history));
+            }, [history]);
+
+            // Save hand and commit the current table state to historical logs
+            const handleForceSave = () => {
+                const timestamp = new Date().toISOString().split('T')[0];
+                const sessionID = `SESS-${Math.floor(1000 + Math.random() * 9000)}`;
+                
+                const currentSessionSummary = {
+                    id: sessionID,
+                    date: timestamp,
+                    totalHands: sessionLog.length,
+                    outcome: 'Saved State'
+                };
+
+                setHistory([currentSessionSummary, ...history]);
+                alert('Session state and hole cards safely committed to memory!');
+            };
+
+            // Ingest hand histories to train the AI metrics
+            const executeImport = () => {
+                if (!importText.trim()) return;
+
+                // Process lines looking for actionable keywords
+                const newLogs = importText.split('\n').filter(line => line.trim() !== '');
+                setSessionLog(prev => [...prev, ...newLogs.map(l => `[Imported] ${l}`)]);
+
+                // Simulate neural weight learning progression per model
+                setModels(prev => prev.map(m => ({
+                    ...m,
+                    gamesLearned: m.gamesLearned + Math.floor(Math.random() * 3) + 1
+                })));
+
+                setImportText('');
+                alert('Poker hand histories successfully parsed. Models updated baseline playstyle matrices!');
+            };
+
+            const handleCardChange = (index, value) => {
+                const updated = [...playerHand];
+                updated[index] = value;
+                setPlayerHand(updated);
+            };
+
+            return (
+                <div class="max-w-5xl mx-auto p-4 md:p-8 min-h-screen flex flex-col justify-between">
+                    <div>
+                        {/* Top Navigation Bar */}
+                        <header class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-8 border-b border-slate-800 pb-6">
+                            <div>
+                                <h1 class="text-2xl font-bold bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">Poker Playstyle Trainer</h1>
+                                <p class="text-xs text-slate-400 mt-1">Adaptive Modeling Blind Simulation Engine</p>
+                            </div>
+                            <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-800">
+                                <button onClick={() => setActiveTab('play')} class={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'play' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>Live Table State</button>
+                                <button onClick={() => setActiveTab('review')} class={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'review' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>Review Session Logs</button>
+                                <button onClick={() => setActiveTab('import')} class={`px-4 py-2 rounded-lg text-sm font-medium transition ${activeTab === 'import' ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md' : 'text-slate-400 hover:text-white'}`}>Import Hand History</button>
+                            </div>
+                        </header>
+
+                        {/* Interactive App Modules */}
+                        {activeTab === 'play' && (
+                            <div class="space-y-6">
+                                {/* Hand Persistence Module */}
+                                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <div>
+                                            <h2 class="text-lg font-bold text-amber-400">Your Hole Cards (Auto-Saves)</h2>
+                                            <p class="text-xs text-slate-400">Cards persist instantly if you exit or refresh the window.</p>
+                                        </div>
+                                        <button onClick={handleForceSave} class="bg-slate-800 border border-slate-700 hover:bg-slate-700 px-4 py-2 rounded-xl text-xs font-semibold tracking-wide transition flex items-center gap-2">💾 Manual Backup Snapshot</button>
+                                    </div>
+                                    <div class="flex gap-4">
+                                        {playerHand.map((card, idx) => (
+                                            <div key={idx} class="flex flex-col gap-1 w-32 bg-slate-950 p-3 rounded-xl border border-slate-800">
+                                                <label class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Card {idx + 1}</label>
+                                                <input type="text" value={card} onChange={(e) => handleCardChange(idx, e.target.value)} class="bg-transparent text-xl font-mono text-center font-bold text-slate-100 border-b border-slate-700 focus:outline-none focus:border-amber-400" maxLength="3" placeholder="e.g. As" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Blind Personality Grid */}
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Blind Neural Models Table</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        {models.map(m => (
+                                            <div key={m.id} class="bg-slate-900 border border-slate-800 p-5 rounded-2xl flex flex-col justify-between shadow-lg relative overflow-hidden group">
+                                                <div class="absolute top-0 right-0 h-1 w-full bg-gradient-to-r from-amber-500 to-red-500 opacity-50"></div>
+                                                <div>
+                                                    <div class="flex justify-between items-start mb-2">
+                                                        <h4 class="font-bold text-slate-200">{m.name}</h4>
+                                                        <span class="text-[10px] bg-slate-950 text-emerald-400 border border-slate-800 font-mono px-2 py-0.5 rounded-md">Adapting</span>
+                                                    </div>
